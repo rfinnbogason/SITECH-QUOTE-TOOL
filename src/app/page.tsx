@@ -1,65 +1,97 @@
-import Image from "next/image";
+import { db, quotes, partsDb, salesReps, savedBuilds, settings } from "@/lib/db"
+import { desc, eq, count } from "drizzle-orm"
+import Link from "next/link"
+import { formatDate } from "@/lib/formatters"
+import { Badge } from "@/components/ui/badge"
+import { FileText, Package, Users, Layers, DollarSign, RefreshCw } from "lucide-react"
 
-export default function Home() {
+export default function DashboardPage() {
+  const recentQuotes = db.select().from(quotes).orderBy(desc(quotes.updatedAt)).limit(8).all()
+  const partCount = db.select({ count: count() }).from(partsDb).get()?.count ?? 0
+  const repCount = db.select({ count: count() }).from(salesReps).where(eq(salesReps.status, "Active")).get()?.count ?? 0
+  const buildCount = db.select({ count: count() }).from(savedBuilds).get()?.count ?? 0
+  const quoteCount = db.select({ count: count() }).from(quotes).get()?.count ?? 0
+  const fxRow = db.select().from(settings).where(eq(settings.key, "fxRate")).get()
+  const fxUpdated = db.select().from(settings).where(eq(settings.key, "fxUpdatedAt")).get()
+  const fxRate = fxRow ? parseFloat(fxRow.value) : 1.3947
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="p-6 max-w-5xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">SITECH Western Canada — Quote Management</p>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <DollarSign className="w-5 h-5 text-blue-600" />
+          <div>
+            <span className="text-sm font-medium text-blue-900">Current FX Rate:</span>
+            <span className="ml-2 text-lg font-bold text-blue-700">1 USD = {fxRate.toFixed(4)} CAD</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex items-center gap-2 text-sm text-blue-600">
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Updated: {fxUpdated?.value ?? "—"}</span>
+          <Link href="/settings" className="ml-2 underline text-blue-700 hover:text-blue-900 text-xs">
+            Update
+          </Link>
         </div>
-      </main>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Total Quotes", value: quoteCount, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", href: "/quotes" },
+          { label: "Parts in DB", value: partCount, icon: Package, color: "text-green-600", bg: "bg-green-50", href: "/parts" },
+          { label: "Active Reps", value: repCount, icon: Users, color: "text-purple-600", bg: "bg-purple-50", href: "/reps" },
+          { label: "Saved Builds", value: buildCount, icon: Layers, color: "text-orange-600", bg: "bg-orange-50", href: "/builds" },
+        ].map(({ label, value, icon: Icon, color, bg, href }) => (
+          <Link key={label} href={href} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+            <div className={`w-9 h-9 ${bg} rounded-lg flex items-center justify-center mb-3`}>
+              <Icon className={`w-5 h-5 ${color}`} />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{value}</div>
+            <div className="text-sm text-gray-500 mt-0.5">{label}</div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900">Recent Quotes</h2>
+          <Link href="/quotes" className="text-sm text-blue-600 hover:underline">View all</Link>
+        </div>
+        {recentQuotes.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">
+            <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm">No quotes yet. Click <strong>New Quote</strong> to get started.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {recentQuotes.map(q => (
+              <Link key={q.id} href={`/quotes/${q.id}`}
+                className="flex items-center px-5 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-medium text-gray-900">{q.number}</span>
+                    <Badge variant={q.status === "Final" ? "default" : "secondary"} className="text-xs">
+                      {q.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-0.5 truncate">
+                    {q.customerCompany || "No customer"}{q.machineMake ? ` — ${q.machineMake}` : ""}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-gray-400">{q.salesRepName || "—"}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{formatDate(q.updatedAt ?? q.createdAt ?? "")}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

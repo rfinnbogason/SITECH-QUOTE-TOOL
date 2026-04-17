@@ -1,5 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# SQLite database (local data)
+/data/sitech.db
+/data/*.db-shm
+/data/*.db-wal
+/public/sitech-logo.png
+
 # dependencies
 /node_modules
 /.pnp
