@@ -1,6 +1,6 @@
 // Run: node scripts/seed.mjs
-import { neon } from "@neondatabase/serverless"
-import { drizzle } from "drizzle-orm/neon-http"
+import postgres from "postgres"
+import { drizzle } from "drizzle-orm/postgres-js"
 import { pgTable, text, integer, real, boolean, serial, timestamp } from "drizzle-orm/pg-core"
 
 const DATABASE_URL = process.env.DATABASE_URL
@@ -9,8 +9,8 @@ if (!DATABASE_URL) {
   process.exit(1)
 }
 
-const sql = neon(DATABASE_URL)
-const db = drizzle(sql)
+const client = postgres(DATABASE_URL)
+const db = drizzle(client)
 
 const settings = pgTable("settings", {
   key: text("key").primaryKey(),

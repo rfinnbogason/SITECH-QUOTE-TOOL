@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@react-pdf/renderer", "@neondatabase/serverless"],
+  serverExternalPackages: ["@react-pdf/renderer", "postgres"],
 };
 
 export default nextConfig;
