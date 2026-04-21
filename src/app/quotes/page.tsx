@@ -3,11 +3,11 @@ import { desc } from "drizzle-orm"
 import Link from "next/link"
 import { formatDate } from "@/lib/formatters"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Plus } from "lucide-react"
+import { FileText } from "lucide-react"
 import { NewQuoteButton } from "@/components/quote/NewQuoteButton"
 
-export default function QuotesPage() {
-  const allQuotes = db.select().from(quotes).orderBy(desc(quotes.updatedAt)).all()
+export default async function QuotesPage() {
+  const allQuotes = await db.select().from(quotes).orderBy(desc(quotes.updatedAt))
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -54,7 +54,7 @@ export default function QuotesPage() {
                       {q.status}
                     </Badge>
                   </td>
-                  <td className="px-3 py-3 text-sm text-gray-400">{formatDate(q.updatedAt ?? q.createdAt ?? "")}</td>
+                  <td className="px-3 py-3 text-sm text-gray-400">{formatDate(String(q.updatedAt ?? q.createdAt ?? ""))}</td>
                 </tr>
               ))}
             </tbody>

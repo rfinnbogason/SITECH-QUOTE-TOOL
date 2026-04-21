@@ -1,7 +1,7 @@
 import { db, salesReps } from "@/lib/db"
 import { RepsClient } from "./RepsClient"
 
-export default function RepsPage() {
-  const reps = db.select().from(salesReps).all()
+export default async function RepsPage() {
+  const reps = await db.select().from(salesReps)
   return <RepsClient reps={reps} />
 }

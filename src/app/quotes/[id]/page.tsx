@@ -8,22 +8,20 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
   const quoteId = parseInt(id, 10)
   if (isNaN(quoteId)) notFound()
 
-  const quote = db.select().from(quotes).where(eq(quotes.id, quoteId)).get()
+  const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId))
   if (!quote) notFound()
 
-  const lineItems = db.select().from(quoteLineItems)
+  const lineItems = await db.select().from(quoteLineItems)
     .where(eq(quoteLineItems.quoteId, quoteId))
     .orderBy(quoteLineItems.position)
-    .all()
 
-  const freightLabour = db.select().from(quoteFreightLabour)
+  const freightLabour = await db.select().from(quoteFreightLabour)
     .where(eq(quoteFreightLabour.quoteId, quoteId))
-    .all()
 
-  const reps = db.select().from(salesReps).all()
-  const freightOpts = db.select().from(freightOptions).all()
-  const labourOpts = db.select().from(labourOptions).all()
-  const fxRow = db.select().from(settings).where(eq(settings.key, "fxRate")).get()
+  const reps = await db.select().from(salesReps)
+  const freightOpts = await db.select().from(freightOptions)
+  const labourOpts = await db.select().from(labourOptions)
+  const [fxRow] = await db.select().from(settings).where(eq(settings.key, "fxRate"))
   const defaultFxRate = fxRow ? parseFloat(fxRow.value) : 1.3947
 
   return (

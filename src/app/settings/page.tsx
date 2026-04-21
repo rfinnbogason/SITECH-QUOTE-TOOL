@@ -1,13 +1,13 @@
 import { db, settings, vendors, freightOptions, labourOptions, markupDefaults } from "@/lib/db"
 import { SettingsClient } from "./SettingsClient"
 
-export default function SettingsPage() {
-  const rows = db.select().from(settings).all()
+export default async function SettingsPage() {
+  const rows = await db.select().from(settings)
   const cfg = Object.fromEntries(rows.map(r => [r.key, r.value]))
-  const vendorList = db.select().from(vendors).all()
-  const freightList = db.select().from(freightOptions).all()
-  const labourList = db.select().from(labourOptions).all()
-  const markupList = db.select().from(markupDefaults).all()
+  const vendorList = await db.select().from(vendors)
+  const freightList = await db.select().from(freightOptions)
+  const labourList = await db.select().from(labourOptions)
+  const markupList = await db.select().from(markupDefaults)
 
   return <SettingsClient config={cfg} vendors={vendorList} freight={freightList} labour={labourList} markup={markupList} />
 }

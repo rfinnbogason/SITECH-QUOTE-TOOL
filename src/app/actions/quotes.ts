@@ -4,14 +4,14 @@ import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { todayISO, futureISO } from "@/lib/formatters"
 
-function getFxRate(): number {
-  const row = db.select().from(settings).where(eq(settings.key, "fxRate")).get()
+async function getFxRate(): Promise<number> {
+  const [row] = await db.select().from(settings).where(eq(settings.key, "fxRate"))
   return row ? parseFloat(row.value) : 1.3947
 }
 
-function generateQuoteNumber(): string {
+async function generateQuoteNumber(): Promise<string> {
   const year = new Date().getFullYear()
-  const all = db.select({ number: quotes.number }).from(quotes).all()
+  const all = await db.select({ number: quotes.number }).from(quotes)
   const maxSeq = all
     .filter(q => q.number.startsWith(`QT-${year}-`))
     .reduce((max, q) => {
@@ -22,70 +22,68 @@ function generateQuoteNumber(): string {
 }
 
 export async function createQuote() {
-  const fxRate = getFxRate()
-  const number = generateQuoteNumber()
-  const result = db.insert(quotes).values({
+  const fxRate = await getFxRate()
+  const number = await generateQuoteNumber()
+  const [result] = await db.insert(quotes).values({
     number,
     fxRate,
     quoteDate: todayISO(),
     validUntil: futureISO(30),
-  }).returning().get()
+  }).returning()
   revalidatePath("/")
   revalidatePath("/quotes")
   return result
 }
 
 export async function getQuote(id: number) {
-  const quote = db.select().from(quotes).where(eq(quotes.id, id)).get()
-  const lineItems = db.select().from(quoteLineItems)
+  const [quote] = await db.select().from(quotes).where(eq(quotes.id, id))
+  const lineItems = await db.select().from(quoteLineItems)
     .where(eq(quoteLineItems.quoteId, id))
     .orderBy(quoteLineItems.position)
-    .all()
-  const freightLabour = db.select().from(quoteFreightLabour)
+  const freightLabour = await db.select().from(quoteFreightLabour)
     .where(eq(quoteFreightLabour.quoteId, id))
-    .all()
   return { quote, lineItems, freightLabour }
 }
 
 export async function listQuotes() {
-  return db.select().from(quotes).orderBy(desc(quotes.updatedAt)).all()
+  return db.select().from(quotes).orderBy(desc(quotes.updatedAt))
 }
 
 export async function updateQuote(id: number, data: Partial<typeof quotes.$inferInsert>) {
-  db.update(quotes).set({ ...data, updatedAt: new Date().toISOString() }).where(eq(quotes.id, id)).run()
+  await db.update(quotes).set({ ...data, updatedAt: new Date() }).where(eq(quotes.id, id))
   revalidatePath(`/quotes/${id}`)
   revalidatePath("/")
 }
 
 export async function upsertLineItem(item: typeof quoteLineItems.$inferInsert) {
   if (item.id) {
-    db.update(quoteLineItems).set(item).where(eq(quoteLineItems.id, item.id)).run()
+    await db.update(quoteLineItems).set(item).where(eq(quoteLineItems.id, item.id))
   } else {
-    db.insert(quoteLineItems).values(item).run()
+    await db.insert(quoteLineItems).values(item)
   }
-  db.update(quotes).set({ updatedAt: new Date().toISOString() }).where(eq(quotes.id, item.quoteId)).run()
+  await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, item.quoteId))
   revalidatePath(`/quotes/${item.quoteId}`)
 }
 
 export async function deleteLineItem(id: number, quoteId: number) {
-  db.delete(quoteLineItems).where(eq(quoteLineItems.id, id)).run()
-  db.update(quotes).set({ updatedAt: new Date().toISOString() }).where(eq(quotes.id, quoteId)).run()
+  await db.delete(quoteLineItems).where(eq(quoteLineItems.id, id))
+  await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, quoteId))
   revalidatePath(`/quotes/${quoteId}`)
 }
 
 export async function upsertFreightLabour(item: typeof quoteFreightLabour.$inferInsert) {
   if (item.id) {
-    db.update(quoteFreightLabour).set(item).where(eq(quoteFreightLabour.id, item.id)).run()
+    await db.update(quoteFreightLabour).set(item).where(eq(quoteFreightLabour.id, item.id))
   } else {
-    db.insert(quoteFreightLabour).values(item).run()
+    await db.insert(quoteFreightLabour).values(item)
   }
-  db.update(quotes).set({ updatedAt: new Date().toISOString() }).where(eq(quotes.id, item.quoteId)).run()
+  await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, item.quoteId))
   revalidatePath(`/quotes/${item.quoteId}`)
 }
 
 export async function deleteFreightLabour(id: number, quoteId: number) {
-  db.delete(quoteFreightLabour).where(eq(quoteFreightLabour.id, id)).run()
-  db.update(quotes).set({ updatedAt: new Date().toISOString() }).where(eq(quotes.id, quoteId)).run()
+  await db.delete(quoteFreightLabour).where(eq(quoteFreightLabour.id, id))
+  await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, quoteId))
   revalidatePath(`/quotes/${quoteId}`)
 }
 
@@ -93,12 +91,12 @@ export async function bulkInsertLineItems(
   quoteId: number,
   items: Omit<typeof quoteLineItems.$inferInsert, "id" | "quoteId">[],
 ) {
-  const existing = db.select({ position: quoteLineItems.position })
-    .from(quoteLineItems).where(eq(quoteLineItems.quoteId, quoteId)).all()
+  const existing = await db.select({ position: quoteLineItems.position })
+    .from(quoteLineItems).where(eq(quoteLineItems.quoteId, quoteId))
   const maxPos = existing.reduce((m, r) => r.position > m ? r.position : m, 0)
-  items.forEach((item, i) => {
-    db.insert(quoteLineItems).values({ ...item, quoteId, position: maxPos + i + 1 }).run()
-  })
-  db.update(quotes).set({ updatedAt: new Date().toISOString() }).where(eq(quotes.id, quoteId)).run()
+  for (let i = 0; i < items.length; i++) {
+    await db.insert(quoteLineItems).values({ ...items[i], quoteId, position: maxPos + i + 1 })
+  }
+  await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, quoteId))
   revalidatePath(`/quotes/${quoteId}`)
 }

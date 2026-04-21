@@ -5,14 +5,19 @@ import { formatDate } from "@/lib/formatters"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Package, Users, Layers, DollarSign, RefreshCw } from "lucide-react"
 
-export default function DashboardPage() {
-  const recentQuotes = db.select().from(quotes).orderBy(desc(quotes.updatedAt)).limit(8).all()
-  const partCount = db.select({ count: count() }).from(partsDb).get()?.count ?? 0
-  const repCount = db.select({ count: count() }).from(salesReps).where(eq(salesReps.status, "Active")).get()?.count ?? 0
-  const buildCount = db.select({ count: count() }).from(savedBuilds).get()?.count ?? 0
-  const quoteCount = db.select({ count: count() }).from(quotes).get()?.count ?? 0
-  const fxRow = db.select().from(settings).where(eq(settings.key, "fxRate")).get()
-  const fxUpdated = db.select().from(settings).where(eq(settings.key, "fxUpdatedAt")).get()
+export default async function DashboardPage() {
+  const recentQuotes = await db.select().from(quotes).orderBy(desc(quotes.updatedAt)).limit(8)
+  const [partCountRow] = await db.select({ count: count() }).from(partsDb)
+  const [repCountRow] = await db.select({ count: count() }).from(salesReps).where(eq(salesReps.status, "Active"))
+  const [buildCountRow] = await db.select({ count: count() }).from(savedBuilds)
+  const [quoteCountRow] = await db.select({ count: count() }).from(quotes)
+  const [fxRow] = await db.select().from(settings).where(eq(settings.key, "fxRate"))
+  const [fxUpdated] = await db.select().from(settings).where(eq(settings.key, "fxUpdatedAt"))
+
+  const partCount = partCountRow?.count ?? 0
+  const repCount = repCountRow?.count ?? 0
+  const buildCount = buildCountRow?.count ?? 0
+  const quoteCount = quoteCountRow?.count ?? 0
   const fxRate = fxRow ? parseFloat(fxRow.value) : 1.3947
 
   return (
@@ -85,7 +90,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-xs text-gray-400">{q.salesRepName || "—"}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{formatDate(q.updatedAt ?? q.createdAt ?? "")}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{formatDate(String(q.updatedAt ?? q.createdAt ?? ""))}</div>
                 </div>
               </Link>
             ))}

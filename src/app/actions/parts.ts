@@ -11,21 +11,21 @@ export async function getParts(search?: string) {
         like(partsDb.description, `%${search}%`),
         like(partsDb.category, `%${search}%`),
       )
-    ).all()
+    )
   }
-  return db.select().from(partsDb).all()
+  return db.select().from(partsDb)
 }
 
 export async function upsertPart(part: typeof partsDb.$inferInsert) {
   if (part.id) {
-    db.update(partsDb).set(part).where(eq(partsDb.id, part.id)).run()
+    await db.update(partsDb).set(part).where(eq(partsDb.id, part.id))
   } else {
-    db.insert(partsDb).values(part).run()
+    await db.insert(partsDb).values(part)
   }
   revalidatePath("/parts")
 }
 
 export async function deletePart(id: number) {
-  db.delete(partsDb).where(eq(partsDb.id, id)).run()
+  await db.delete(partsDb).where(eq(partsDb.id, id))
   revalidatePath("/parts")
 }

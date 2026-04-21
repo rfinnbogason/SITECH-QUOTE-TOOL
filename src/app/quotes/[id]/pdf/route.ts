@@ -10,19 +10,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const quoteId = parseInt(id, 10)
   if (isNaN(quoteId)) return new NextResponse("Not found", { status: 404 })
 
-  const quote = db.select().from(quotes).where(eq(quotes.id, quoteId)).get()
+  const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId))
   if (!quote) return new NextResponse("Not found", { status: 404 })
 
-  const lineItems = db.select().from(quoteLineItems)
+  const lineItems = await db.select().from(quoteLineItems)
     .where(eq(quoteLineItems.quoteId, quoteId))
     .orderBy(quoteLineItems.position)
-    .all()
 
-  const freightLabour = db.select().from(quoteFreightLabour)
+  const freightLabour = await db.select().from(quoteFreightLabour)
     .where(eq(quoteFreightLabour.quoteId, quoteId))
-    .all()
 
-  const fxRow = db.select().from(settings).where(eq(settings.key, "fxRate")).get()
+  const [fxRow] = await db.select().from(settings).where(eq(settings.key, "fxRate"))
   const defaultFxRate = fxRow ? parseFloat(fxRow.value) : 1.3947
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

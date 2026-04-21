@@ -1,7 +1,7 @@
 import { db, partsDb } from "@/lib/db"
 import { PartsClient } from "./PartsClient"
 
-export default function PartsPage() {
-  const parts = db.select().from(partsDb).all()
+export default async function PartsPage() {
+  const parts = await db.select().from(partsDb)
   return <PartsClient parts={parts} />
 }

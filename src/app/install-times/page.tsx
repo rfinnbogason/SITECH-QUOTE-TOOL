@@ -1,7 +1,7 @@
 import { db, installTimes } from "@/lib/db"
 
-export default function InstallTimesPage() {
-  const times = db.select().from(installTimes).all()
+export default async function InstallTimesPage() {
+  const times = await db.select().from(installTimes)
   const categories = [...new Set(times.map(t => t.category))]
 
   return (
