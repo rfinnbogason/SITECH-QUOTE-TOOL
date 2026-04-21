@@ -23,14 +23,17 @@ export function PrintQuote({ quote, lineItems, freightLabour, defaultFxRate }: P
   const freightLabourTotal = freightLabour.reduce((s, fl) => s + fl.qtyHours * fl.rateCad, 0)
   const totals = calcQuoteTotals(calcedItems, freightLabourTotal, quote.discountPct, quote.taxPct, fxRate)
 
-  const groupedItems = SECTIONS.map(section => ({
-    section,
-    items: calcedItems.filter(i => i.section === section || i.section === `🏗️ ${section}` || i.section.replace(/^[\p{Emoji}\s]+/u, "").trim() === section),
-  })).filter(g => g.items.length > 0)
+  const knownIds = new Set<number>()
+  const groupedItems: { section: string; items: typeof calcedItems }[] = SECTIONS.map(section => {
+    const items = calcedItems.filter(i => {
+      const clean = i.section.replace(/^[\p{Emoji}\s]+/u, "").trim()
+      return i.section === section || clean === section
+    })
+    items.forEach(i => knownIds.add(i.id))
+    return { section, items }
+  }).filter(g => g.items.length > 0)
 
-  // Also catch any items with sections not in the SECTIONS list
-  const knownSections = new Set(groupedItems.flatMap(g => g.items.map(i => i.id)))
-  const otherItems = calcedItems.filter(i => !knownSections.has(i.id))
+  const otherItems = calcedItems.filter(i => !knownIds.has(i.id))
   if (otherItems.length > 0) {
     groupedItems.push({ section: "OTHER", items: otherItems })
   }
