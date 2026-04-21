@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { loadBuild } from "@/app/actions/builds"
 import { bulkInsertLineItems } from "@/app/actions/quotes"
