@@ -7,7 +7,7 @@ export async function getBuilds() {
   return db.select().from(savedBuilds)
 }
 
-export async function saveBuild(name: string, machineType: string, quoteId: number) {
+export async function saveBuild(name: string, machineType: string, quoteId: number, groupName = "Recent Builds") {
   const items = await db.select().from(quoteLineItems)
     .where(eq(quoteLineItems.quoteId, quoteId))
     .orderBy(quoteLineItems.position)
@@ -15,7 +15,9 @@ export async function saveBuild(name: string, machineType: string, quoteId: numb
   await db.insert(savedBuilds).values({
     name,
     machineType,
+    groupName,
     lineItemsJson: JSON.stringify(itemsData),
+    lastQuotedDate: new Date(),
   })
   revalidatePath("/builds")
 }
@@ -29,7 +31,7 @@ export async function loadBuild(buildId: number) {
   const [build] = await db.select().from(savedBuilds).where(eq(savedBuilds.id, buildId))
   if (!build) return null
   await db.update(savedBuilds)
-    .set({ lastUsedAt: new Date() })
+    .set({ lastUsedAt: new Date(), lastQuotedDate: new Date() })
     .where(eq(savedBuilds.id, buildId))
   return {
     ...build,

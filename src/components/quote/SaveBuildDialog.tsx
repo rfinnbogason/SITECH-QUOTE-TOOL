@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { saveBuild } from "@/app/actions/builds"
 import { toast } from "sonner"
+import { BUILD_GROUPS } from "@/lib/constants"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Props {
   open: boolean
@@ -17,13 +19,14 @@ interface Props {
 export function SaveBuildDialog({ open, onClose, quoteId, machineMake }: Props) {
   const [name, setName] = useState("")
   const [machineType, setMachineType] = useState(machineMake)
+  const [groupName, setGroupName] = useState("Recent Builds")
   const [saving, setSaving] = useState(false)
 
   async function handleSave() {
     if (!name.trim()) return
     setSaving(true)
-    await saveBuild(name.trim(), machineType, quoteId)
-    toast.success(`Build "${name}" saved!`)
+    await saveBuild(name.trim(), machineType, quoteId, groupName)
+    toast.success(`Build "${name}" saved to ${groupName}!`)
     setSaving(false)
     setName("")
     onClose()
@@ -45,6 +48,19 @@ export function SaveBuildDialog({ open, onClose, quoteId, machineMake }: Props) 
             <Label htmlFor="machine-type" className="text-sm">Machine Type</Label>
             <Input id="machine-type" value={machineType} onChange={e => setMachineType(e.target.value)}
               placeholder="e.g. CAT D8T" className="h-9" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-sm">Group / Folder</Label>
+            <Select value={groupName} onValueChange={setGroupName}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BUILD_GROUPS.map(g => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>

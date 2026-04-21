@@ -118,10 +118,12 @@ export const quoteFreightLabour = pgTable("quote_freight_labour", {
 export const savedBuilds = pgTable("saved_builds", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  groupName: text("group_name").notNull().default("Recent Builds"),
   machineType: text("machine_type").notNull().default(""),
   lineItemsJson: text("line_items_json").notNull().default("[]"),
   createdAt: timestamp("created_at").defaultNow(),
   lastUsedAt: timestamp("last_used_at"),
+  lastQuotedDate: timestamp("last_quoted_date"),
 })
 
 export type Setting = typeof settings.$inferSelect
