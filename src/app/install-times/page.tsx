@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, installTimes } from "@/lib/db"
 
 export default async function InstallTimesPage() {

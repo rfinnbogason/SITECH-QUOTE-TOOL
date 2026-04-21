@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, salesReps } from "@/lib/db"
 import { RepsClient } from "./RepsClient"
 

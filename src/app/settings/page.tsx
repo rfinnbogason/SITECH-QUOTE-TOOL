@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, settings, vendors, freightOptions, labourOptions, markupDefaults } from "@/lib/db"
 import { SettingsClient } from "./SettingsClient"
 

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, savedBuilds } from "@/lib/db"
 import { BuildsClient } from "./BuildsClient"
 

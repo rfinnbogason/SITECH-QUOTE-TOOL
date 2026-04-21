@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, quotes, partsDb, salesReps, savedBuilds, settings } from "@/lib/db"
 import { desc, eq, count } from "drizzle-orm"
 import Link from "next/link"
