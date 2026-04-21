@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { db, quotes, quoteLineItems, quoteFreightLabour, salesReps, freightOptions, labourOptions, settings } from "@/lib/db"
 import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
