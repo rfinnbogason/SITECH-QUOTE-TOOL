@@ -5,7 +5,7 @@ import {
 import type { Quote, QuoteLineItem, QuoteFreightLabour } from "@/lib/db/schema"
 import { calcLineItem, calcQuoteTotals } from "@/lib/calculations"
 import { formatCurrency, formatDate } from "@/lib/formatters"
-import { SECTIONS, COMPANY_INFO, TERMS } from "@/lib/constants"
+import { SECTIONS, COMPANY_INFO, TERMS_SHORT as TERMS } from "@/lib/constants"
 
 // Helvetica is a built-in PDF font, no registration needed
 
