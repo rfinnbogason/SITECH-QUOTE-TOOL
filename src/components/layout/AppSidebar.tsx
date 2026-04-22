@@ -7,6 +7,7 @@ import {
   Clock, Layers, Plus, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { TourGuide } from "./TourGuide"
 
 const nav = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -78,5 +79,7 @@ export function AppSidebar() {
         <p className="text-xs text-gray-400">v1.0.0</p>
       </div>
     </aside>
+    <TourGuide />
+    </>
   )
 }
