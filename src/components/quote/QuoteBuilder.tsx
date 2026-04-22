@@ -20,6 +20,7 @@ import {
   FileDown, ClipboardPaste, Save, ExternalLink,
   DollarSign, TrendingUp, Package, Layers,
 } from "lucide-react"
+import { motion } from "framer-motion"
 
 interface Props {
   quote: Quote
@@ -154,7 +155,13 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* KPI Cards */}
-        <div id="tour-kpi-cards" className="grid grid-cols-4 gap-3">
+        <motion.div
+          id="tour-kpi-cards"
+          className="grid grid-cols-4 gap-3"
+          variants={{ animate: { transition: { staggerChildren: 0.06 } } }}
+          initial="initial"
+          animate="animate"
+        >
           {[
             { label: "Total CAD", value: formatCurrency(totals.grandTotalCad), icon: DollarSign, color: "text-blue-600" },
             { label: "Total USD", value: formatCurrency(totals.grandTotalUsd, "USD"), icon: DollarSign, color: "text-green-600" },
@@ -163,15 +170,20 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
             { label: "Items", value: lineItems.length, icon: Package, color: "text-purple-600" },
             { label: "FX Rate", value: fxRate.toFixed(4), icon: DollarSign, color: "text-gray-600" },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-white rounded-lg border border-gray-200 p-3 flex items-center gap-2">
+            <motion.div
+              key={label}
+              className="bg-white rounded-lg border border-gray-200 p-3 flex items-center gap-2"
+              variants={{ initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
               <Icon className={`w-4 h-4 ${color} shrink-0`} />
               <div>
                 <div className="text-xs text-gray-500">{label}</div>
                 <div className={`text-sm font-semibold ${color}`}>{value}</div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Header Cards */}
         <div className="grid grid-cols-3 gap-3">

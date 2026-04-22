@@ -1,0 +1,135 @@
+"use client"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { formatDate } from "@/lib/formatters"
+import { Badge } from "@/components/ui/badge"
+import { FileText, Package, Users, Layers, DollarSign, RefreshCw } from "lucide-react"
+import type { Quote } from "@/lib/db/schema"
+
+interface Props {
+  fxRate: number
+  fxUpdatedAt: string | null
+  quoteCount: number
+  partCount: number
+  repCount: number
+  buildCount: number
+  recentQuotes: Quote[]
+}
+
+const fadeUp = {
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+}
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.07 } },
+}
+
+export function DashboardClient({ fxRate, fxUpdatedAt, quoteCount, partCount, repCount, buildCount, recentQuotes }: Props) {
+  const stats = [
+    { label: "Total Quotes", value: quoteCount, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", href: "/quotes" },
+    { label: "Parts in DB", value: partCount, icon: Package, color: "text-green-600", bg: "bg-green-50", href: "/parts" },
+    { label: "Active Reps", value: repCount, icon: Users, color: "text-purple-600", bg: "bg-purple-50", href: "/reps" },
+    { label: "Saved Builds", value: buildCount, icon: Layers, color: "text-orange-600", bg: "bg-orange-50", href: "/builds" },
+  ]
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <motion.div className="mb-6" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">SITECH Western Canada — Quote Management</p>
+      </motion.div>
+
+      {/* FX Rate Banner */}
+      <motion.div
+        id="tour-fx-rate"
+        className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center justify-between"
+        initial={{ opacity: 0, x: -12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35, delay: 0.05 }}
+      >
+        <div className="flex items-center gap-3">
+          <DollarSign className="w-5 h-5 text-blue-600" />
+          <div>
+            <span className="text-sm font-medium text-blue-900">Current FX Rate:</span>
+            <span className="ml-2 text-lg font-bold text-blue-700">1 USD = {fxRate.toFixed(4)} CAD</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-blue-600">
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Updated: {fxUpdatedAt ?? "—"}</span>
+          <Link href="/settings" className="ml-2 underline text-blue-700 hover:text-blue-900 text-xs">Update</Link>
+        </div>
+      </motion.div>
+
+      {/* Stat Cards */}
+      <motion.div
+        id="tour-stats"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+      >
+        {stats.map(({ label, value, icon: Icon, color, bg, href }) => (
+          <motion.div key={label} variants={fadeUp} transition={{ duration: 0.3, ease: "easeOut" }}>
+            <Link href={href} className="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <div className={`w-9 h-9 ${bg} rounded-lg flex items-center justify-center mb-3`}>
+                <Icon className={`w-5 h-5 ${color}`} />
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{value}</div>
+              <div className="text-sm text-gray-500 mt-0.5">{label}</div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Recent Quotes */}
+      <motion.div
+        id="tour-recent-quotes"
+        className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.25 }}
+      >
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900">Recent Quotes</h2>
+          <Link href="/quotes" className="text-sm text-blue-600 hover:underline">View all</Link>
+        </div>
+        {recentQuotes.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">
+            <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm">No quotes yet. Click <strong>New Quote</strong> to get started.</p>
+          </div>
+        ) : (
+          <motion.div
+            className="divide-y divide-gray-100"
+            variants={{ animate: { transition: { staggerChildren: 0.04, delayChildren: 0.3 } } }}
+            initial="initial"
+            animate="animate"
+          >
+            {recentQuotes.map(q => (
+              <motion.div key={q.id} variants={fadeUp} transition={{ duration: 0.25, ease: "easeOut" }}>
+                <Link href={`/quotes/${q.id}`} className="flex items-center px-5 py-3 hover:bg-gray-50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-medium text-gray-900">{q.number}</span>
+                      <Badge variant={q.status === "Final" ? "default" : "secondary"} className="text-xs">{q.status}</Badge>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-0.5 truncate">
+                      {q.customerCompany || "No customer"}{q.machineMake ? ` — ${q.machineMake}` : ""}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs text-gray-400">{q.salesRepName || "—"}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{formatDate(String(q.updatedAt ?? q.createdAt ?? ""))}</div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
+  )
+}

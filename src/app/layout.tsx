@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import "./globals.css"
 import { AppSidebar } from "@/components/layout/AppSidebar"
+import { PageTransition } from "@/components/layout/PageTransition"
 import { Toaster } from "@/components/ui/sonner"
 
 const geist = Geist({ subsets: ["latin"] })
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex h-screen overflow-hidden">
           <AppSidebar />
           <main className="flex-1 overflow-y-auto">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </main>
         </div>
         <Toaster richColors position="bottom-right" />
