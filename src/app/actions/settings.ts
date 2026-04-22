@@ -41,6 +41,11 @@ export async function upsertFreightOption(f: typeof freightOptions.$inferInsert)
   revalidatePath("/settings")
 }
 
+export async function deleteFreightOption(code: string) {
+  await db.delete(freightOptions).where(eq(freightOptions.code, code))
+  revalidatePath("/settings")
+}
+
 export async function getLabourOptions() {
   return db.select().from(labourOptions)
 }
@@ -50,12 +55,22 @@ export async function upsertLabourOption(l: typeof labourOptions.$inferInsert) {
   revalidatePath("/settings")
 }
 
+export async function deleteLabourOption(code: string) {
+  await db.delete(labourOptions).where(eq(labourOptions.code, code))
+  revalidatePath("/settings")
+}
+
 export async function getMarkupDefaults() {
   return db.select().from(markupDefaults)
 }
 
 export async function upsertMarkupDefault(m: typeof markupDefaults.$inferInsert) {
   await db.insert(markupDefaults).values(m).onConflictDoUpdate({ target: markupDefaults.category, set: m })
+  revalidatePath("/settings")
+}
+
+export async function deleteMarkupDefault(category: string) {
+  await db.delete(markupDefaults).where(eq(markupDefaults.category, category))
   revalidatePath("/settings")
 }
 
