@@ -300,11 +300,13 @@ export function QuotesClient({ quotes: initQuotes, folders: initFolders }: Props
                                       <Folder className="w-3.5 h-3.5" /> {f.name}
                                     </DropdownMenuItem>
                                   ))}
-                                  {folders.length === 0 && (
-                                    <DropdownMenuItem disabled className="text-gray-400 text-xs">
-                                      No folders yet — create one
-                                    </DropdownMenuItem>
-                                  )}
+                                  <DropdownMenuSeparator />
+                                  <NewFolderMenuItem onCreated={(name) => {
+                                    const temp: QuoteFolder = { id: Date.now(), name, createdAt: new Date() }
+                                    setFolders(prev => [...prev, temp].sort((a, b) => a.name.localeCompare(b.name)))
+                                    handleMove(q, name)
+                                    start(async () => { await createQuoteFolder(name) })
+                                  }} />
                                 </DropdownMenuSubContent>
                               </DropdownMenuSub>
                               <DropdownMenuSeparator />
@@ -325,6 +327,46 @@ export function QuotesClient({ quotes: initQuotes, folders: initFolders }: Props
             )}
           </motion.div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function NewFolderMenuItem({ onCreated }: { onCreated: (name: string) => void }) {
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState("")
+
+  if (!creating) {
+    return (
+      <DropdownMenuItem onSelect={e => { e.preventDefault(); setCreating(true) }} className="gap-2 text-blue-600">
+        <Plus className="w-3.5 h-3.5" /> New folder…
+      </DropdownMenuItem>
+    )
+  }
+
+  function commit() {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    onCreated(trimmed)
+    setName("")
+    setCreating(false)
+  }
+
+  return (
+    <div className="px-2 py-1" onKeyDown={e => e.stopPropagation()}>
+      <Input
+        autoFocus
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") setCreating(false) }}
+        placeholder="Folder name…"
+        className="h-7 text-xs mb-1"
+      />
+      <div className="flex gap-1">
+        <Button size="sm" onClick={commit} disabled={!name.trim()} className="h-6 text-xs flex-1 bg-blue-600 hover:bg-blue-700">
+          Create & Move
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setCreating(false)} className="h-6 text-xs">✕</Button>
       </div>
     </div>
   )

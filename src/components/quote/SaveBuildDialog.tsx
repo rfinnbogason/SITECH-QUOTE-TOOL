@@ -4,23 +4,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { saveBuild } from "@/app/actions/builds"
+import { saveBuild, createBuildGroup } from "@/app/actions/builds"
 import { toast } from "sonner"
-import { BUILD_GROUPS } from "@/lib/constants"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { BuildGroup } from "@/lib/db/schema"
 
 interface Props {
   open: boolean
   onClose: () => void
   quoteId: number
   machineMake: string
+  groups: BuildGroup[]
 }
 
-export function SaveBuildDialog({ open, onClose, quoteId, machineMake }: Props) {
+export function SaveBuildDialog({ open, onClose, quoteId, machineMake, groups: initGroups }: Props) {
   const [name, setName] = useState("")
   const [machineType, setMachineType] = useState(machineMake)
   const [groupName, setGroupName] = useState("Recent Builds")
+  const [groups, setGroups] = useState(initGroups)
   const [saving, setSaving] = useState(false)
+  const [creatingGroup, setCreatingGroup] = useState(false)
+  const [newGroupName, setNewGroupName] = useState("")
 
   async function handleSave() {
     if (!name.trim()) return
@@ -31,6 +34,23 @@ export function SaveBuildDialog({ open, onClose, quoteId, machineMake }: Props) 
     setName("")
     onClose()
   }
+
+  async function handleCreateGroup() {
+    const trimmed = newGroupName.trim()
+    if (!trimmed) return
+    const temp: BuildGroup = { id: Date.now(), name: trimmed, createdAt: new Date() }
+    setGroups(prev => [...prev, temp].sort((a, b) => a.name.localeCompare(b.name)))
+    setGroupName(trimmed)
+    setNewGroupName("")
+    setCreatingGroup(false)
+    await createBuildGroup(trimmed)
+    toast.success(`Group "${trimmed}" created`)
+  }
+
+  const allGroups = [
+    { id: -1, name: "Recent Builds" },
+    ...groups.filter(g => g.name !== "Recent Builds"),
+  ]
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -51,16 +71,47 @@ export function SaveBuildDialog({ open, onClose, quoteId, machineMake }: Props) 
           </div>
           <div className="space-y-1">
             <Label className="text-sm">Group / Folder</Label>
-            <Select value={groupName} onValueChange={setGroupName}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {BUILD_GROUPS.map(g => (
-                  <SelectItem key={g} value={g}>{g}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-1.5">
+              {allGroups.map(g => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGroupName(g.name)}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                    groupName === g.name
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                  }`}
+                >
+                  {g.name}
+                </button>
+              ))}
+              {!creatingGroup && (
+                <button
+                  type="button"
+                  onClick={() => setCreatingGroup(true)}
+                  className="px-3 py-1 rounded-full text-xs border border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+                >
+                  + New group
+                </button>
+              )}
+            </div>
+            {creatingGroup && (
+              <div className="flex gap-1 mt-2">
+                <Input
+                  autoFocus
+                  value={newGroupName}
+                  onChange={e => setNewGroupName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleCreateGroup(); if (e.key === "Escape") setCreatingGroup(false) }}
+                  placeholder="Group name…"
+                  className="h-7 text-xs flex-1"
+                />
+                <Button size="sm" onClick={handleCreateGroup} disabled={!newGroupName.trim()} className="h-7 text-xs bg-blue-600 hover:bg-blue-700">
+                  Add
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setCreatingGroup(false)} className="h-7 text-xs">✕</Button>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>

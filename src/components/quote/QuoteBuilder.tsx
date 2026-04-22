@@ -1,7 +1,7 @@
 "use client"
 import { useState, useCallback, useTransition } from "react"
 import { toast } from "sonner"
-import type { Quote, QuoteLineItem, QuoteFreightLabour, SalesRep, FreightOption, LabourOption } from "@/lib/db/schema"
+import type { Quote, QuoteLineItem, QuoteFreightLabour, SalesRep, FreightOption, LabourOption, BuildGroup } from "@/lib/db/schema"
 import { updateQuote, upsertLineItem, deleteLineItem, upsertFreightLabour, deleteFreightLabour, bulkInsertLineItems } from "@/app/actions/quotes"
 import { calcLineItem, calcQuoteTotals } from "@/lib/calculations"
 import { formatCurrency, formatPct } from "@/lib/formatters"
@@ -29,9 +29,10 @@ interface Props {
   freightOptions: FreightOption[]
   labourOptions: LabourOption[]
   defaultFxRate: number
+  buildGroups: BuildGroup[]
 }
 
-export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: initFL, reps, freightOptions, labourOptions, defaultFxRate }: Props) {
+export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: initFL, reps, freightOptions, labourOptions, defaultFxRate, buildGroups }: Props) {
   const [isPending, startTransition] = useTransition()
   const [lineItems, setLineItems] = useState(initLineItems)
   const [freightLabour, setFreightLabour] = useState(initFL)
@@ -374,6 +375,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
         onClose={() => setSaveBuildOpen(false)}
         quoteId={quoteData.id}
         machineMake={quoteData.machineMake ?? ""}
+        groups={buildGroups}
       />
     </div>
   )
