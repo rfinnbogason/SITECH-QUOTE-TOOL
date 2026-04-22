@@ -35,6 +35,7 @@ export function SettingsClient({ config, vendors, freight, labour, markup }: Pro
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
 
       {/* FX Rate */}
+      <div id="tour-settings-fx">
       <Section title="Currency & FX Rate">
         <div className="flex items-end gap-3">
           <div>
@@ -55,6 +56,7 @@ export function SettingsClient({ config, vendors, freight, labour, markup }: Pro
           </div>
         </div>
       </Section>
+      </div>
 
       {/* Vendor Discounts */}
       <Section title="Vendor Discount Levels">

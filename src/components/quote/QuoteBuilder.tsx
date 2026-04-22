@@ -118,14 +118,14 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
   return (
     <div className="flex flex-col h-full">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
+      <div id="tour-quote-topbar" className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <span className="font-mono text-lg font-bold text-gray-900">{quoteData.number}</span>
           <Badge variant={quoteData.status === "Final" ? "default" : "secondary"}>{quoteData.status}</Badge>
           {isPending && <span className="text-xs text-gray-400 animate-pulse">Saving…</span>}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPasteOpen(true)} className="gap-1.5 text-xs">
+          <Button id="tour-paste-import" variant="outline" size="sm" onClick={() => setPasteOpen(true)} className="gap-1.5 text-xs">
             <ClipboardPaste className="w-3.5 h-3.5" />
             Paste Import
           </Button>
@@ -154,7 +154,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* KPI Cards */}
-        <div className="grid grid-cols-4 gap-3">
+        <div id="tour-kpi-cards" className="grid grid-cols-4 gap-3">
           {[
             { label: "Total CAD", value: formatCurrency(totals.grandTotalCad), icon: DollarSign, color: "text-blue-600" },
             { label: "Total USD", value: formatCurrency(totals.grandTotalUsd, "USD"), icon: DollarSign, color: "text-green-600" },
@@ -216,7 +216,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
           </div>
 
           {/* Customer */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+          <div id="tour-customer-info" className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">👤 Customer</div>
             <div className="space-y-2">
               <FieldRow label="Company">
@@ -243,7 +243,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
           </div>
 
           {/* Machine */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+          <div id="tour-machine-info" className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🚜 Machine</div>
             <div className="space-y-2">
               <FieldRow label="Make">
@@ -279,7 +279,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
         </div>
 
         {/* Line Items */}
-        <div className="bg-white rounded-xl border border-gray-200">
+        <div id="tour-line-items" className="bg-white rounded-xl border border-gray-200">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 text-sm">Line Items ({lineItems.length})</h2>
             <Button size="sm" variant="outline" onClick={handleAddRow} className="text-xs gap-1">
@@ -295,6 +295,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
         </div>
 
         {/* Freight & Labour */}
+        <div id="tour-freight-labour">
         <FreightLabourSection
           items={freightLabour}
           freightOptions={freightOptions}
@@ -303,9 +304,10 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
           onChange={handleFLChange}
           onDelete={handleFLDelete}
         />
+        </div>
 
         {/* Summary */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div id="tour-quote-summary" className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-900 text-sm mb-4">Quote Summary</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-xl">
             <SummaryRow label="Products Subtotal" usd={totals.productSubtotalUsd} cad={totals.productSubtotalCad} />

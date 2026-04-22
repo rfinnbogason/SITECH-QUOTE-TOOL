@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         <p className="text-gray-500 text-sm mt-1">SITECH Western Canada — Quote Management</p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+      <div id="tour-fx-rate" className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <DollarSign className="w-5 h-5 text-blue-600" />
           <div>
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div id="tour-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Total Quotes", value: quoteCount, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", href: "/quotes" },
           { label: "Parts in DB", value: partCount, icon: Package, color: "text-green-600", bg: "bg-green-50", href: "/parts" },
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200">
+      <div id="tour-recent-quotes" className="bg-white rounded-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900">Recent Quotes</h2>
           <Link href="/quotes" className="text-sm text-blue-600 hover:underline">View all</Link>

@@ -47,7 +47,7 @@ export function AppSidebar() {
       </div>
 
       <div className="p-3">
-        <Button onClick={handleNewQuote} className="w-full bg-blue-600 hover:bg-blue-700 text-sm gap-2">
+        <Button id="tour-new-quote" onClick={handleNewQuote} className="w-full bg-blue-600 hover:bg-blue-700 text-sm gap-2">
           <Plus className="w-4 h-4" />
           New Quote
         </Button>

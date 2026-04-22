@@ -57,7 +57,7 @@ export function BuildsClient({ builds }: { builds: SavedBuild[] }) {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div id="tour-builds-page" className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Saved Builds</h1>
         <p className="text-gray-500 text-sm mt-1">Reusable machine configurations organized by group</p>

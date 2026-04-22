@@ -1,196 +1,283 @@
 "use client"
-import { useState, useEffect } from "react"
-import { X, ChevronRight, ChevronLeft, HelpCircle, FileText, Plus, Table2, Truck, Printer, Layers, Settings, DollarSign } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { HelpCircle } from "lucide-react"
 
-const TOUR_KEY = "sitech_tour_v1_seen"
+const TOUR_SEEN_KEY = "sitech_tour_v2_seen"
+const TOUR_STATE_KEY = "sitech_tour_v2_state"
 
-const steps = [
+interface TourState {
+  active: boolean
+  step: number
+  quoteId?: number
+}
+
+interface StepDef {
+  page: string | RegExp
+  element: string
+  title: string
+  description: string
+  side?: "top" | "bottom" | "left" | "right"
+  align?: "start" | "center" | "end"
+  navigateTo?: (state: TourState) => string
+}
+
+const STEPS: StepDef[] = [
   {
-    icon: <FileText className="w-10 h-10 text-blue-600" />,
-    title: "Welcome to SITECH Quote Tool",
-    body: "This tool replaces the Excel quoting process. You can create professional customer-ready quotes in minutes, track all your quotes in one place, and generate clean PDFs — no more save-as, no more broken formulas.",
-    tip: null,
+    page: "/",
+    element: "#tour-new-quote",
+    title: "New Quote",
+    description: "Click here any time to start a fresh quote. Each quote gets a unique number automatically and auto-saves as you work — no manual saving needed.",
+    side: "right",
+    align: "start",
   },
   {
-    icon: <Plus className="w-10 h-10 text-blue-600" />,
-    title: "Creating a New Quote",
-    body: "Click the blue New Quote button in the sidebar to start. Each quote gets a unique number (QT-YYYY-####) automatically. Fill in the customer details, machine make/model/serial, and choose your sales rep from the dropdown.",
-    tip: "The quote auto-saves as you type — you never need to manually save.",
+    page: "/",
+    element: "#tour-fx-rate",
+    title: "Exchange Rate",
+    description: "All USD-priced items are converted to CAD using this rate. Update it in Settings whenever the exchange rate changes — every open quote reflects the new rate immediately.",
+    side: "bottom",
   },
   {
-    icon: <Table2 className="w-10 h-10 text-blue-600" />,
-    title: "Adding Line Items",
-    body: "In the quote builder, use Add Item to add parts manually. Set the part number, description, list price (USD or CAD), quantity, and your discount %. The tool automatically calculates the CAD sell price, profit, and margin for each line.",
-    tip: "Use the Section dropdown on each row to organize items (e.g. Whole Machine, Cab Kit, Licenses).",
+    page: "/",
+    element: "#tour-stats",
+    title: "Quick Stats",
+    description: "At a glance: total quotes in the system, parts in your catalog, active sales reps, and saved build templates. Click any card to jump to that section.",
+    side: "bottom",
   },
   {
-    icon: <Table2 className="w-10 h-10 text-green-600" />,
-    title: "Paste Import — Fastest Way to Add Items",
-    body: "Copy a list of parts from a vendor email, spreadsheet, or PDF and click Paste Import. The tool auto-detects columns (description, part number, price, qty) and shows you a preview before adding. Confirm and all rows are added instantly.",
-    tip: "Works with tab-separated or comma-separated data. You can fix column assignments in the preview.",
+    page: "/",
+    element: "#tour-recent-quotes",
+    title: "Recent Quotes",
+    description: "Your most recently updated quotes listed here. Click any row to open it and pick up where you left off. Use the Quotes page for the full list with filtering.",
+    side: "top",
+    navigateTo: (s) => s.quoteId ? `/quotes/${s.quoteId}` : "/",
   },
   {
-    icon: <Truck className="w-10 h-10 text-orange-600" />,
+    page: /^\/quotes\/\d+/,
+    element: "#tour-quote-topbar",
+    title: "Quote Actions",
+    description: "The main action bar. Paste Import lets you paste messy vendor data and auto-detect columns. Save Build stores this configuration as a reusable template. Preview and Download PDF generate the customer-ready document.",
+    side: "bottom",
+    align: "end",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-paste-import",
+    title: "Paste Import",
+    description: "Copy a list of parts from a vendor email, Excel, or PDF — then click here. The tool detects columns (description, part #, price, qty) and shows a preview. One click adds all rows to your quote.",
+    side: "bottom",
+    align: "end",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-kpi-cards",
+    title: "Live KPIs",
+    description: "These update in real time as you edit. Total CAD, Total USD, Profit, and Margin tell you the health of the quote at a glance. Margin turns amber under 20% to flag low-margin deals.",
+    side: "bottom",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-customer-info",
+    title: "Customer Details",
+    description: "Fill in who you're quoting: company, contact, email, phone. You can also override the FX rate per-quote here if a customer needs a locked-in rate.",
+    side: "bottom",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-machine-info",
+    title: "Machine Details",
+    description: "The machine being equipped. Make, model, serial number, and install type all appear on the printed quote so the customer can reference back to their specific unit.",
+    side: "bottom",
+    align: "end",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-line-items",
+    title: "Line Items",
+    description: "Each row is one product. Set part number, description, list price (USD or CAD), quantity, and your discount %. The CAD sell price, profit, and margin calculate instantly. Use the Section column to group items on the printed quote.",
+    side: "top",
+  },
+  {
+    page: /^\/quotes\/\d+/,
+    element: "#tour-freight-labour",
     title: "Freight & Labour",
-    body: "Scroll down to the Freight & Labour section. Add installation labour (hourly rate pulls from Settings), freight charges, and travel. These show as separate line items on the customer quote with their own totals.",
-    tip: "Labour rates and freight options are managed in Settings so they stay consistent across all quotes.",
+    description: "Add installation labour hours (rate pulls from Settings), freight charges, and travel here. These appear as separate line items on the customer quote with their own totals.",
+    side: "top",
+    navigateTo: () => "/builds",
   },
   {
-    icon: <DollarSign className="w-10 h-10 text-blue-600" />,
-    title: "Quote Summary & FX Rate",
-    body: "The right panel shows subtotal, freight/labour, any discount, tax, and the grand total in CAD. The USD → CAD exchange rate is shown at the bottom. All USD-priced items are automatically converted using the current FX rate.",
-    tip: "Update the FX rate in Settings whenever the exchange rate changes — it updates all open quotes immediately.",
-  },
-  {
-    icon: <Printer className="w-10 h-10 text-blue-600" />,
-    title: "Printing & PDF",
-    body: "When the quote is ready, click the Print button at the top of the quote. This opens a print preview with the SITECH/Trimble header, all line items grouped by section, totals, and the Terms & Conditions on page 2. Use Print / Save PDF to export.",
-    tip: "Only items with Show Price enabled appear on the customer copy. Use this to hide internal-only items.",
-  },
-  {
-    icon: <Layers className="w-10 h-10 text-orange-600" />,
+    page: "/builds",
+    element: "#tour-builds-page",
     title: "Saved Builds",
-    body: "Built a standard dozer or excavator kit you quote often? Click Save Build on any quote to store the line items as a reusable template. On the Builds page, click Load into New Quote to instantly populate a new quote with that configuration.",
-    tip: "Builds are organized by group (Dozer, Excavator, Grader, etc.) and show when they were last quoted.",
+    description: "A standard dozer kit, excavator package, or survey setup you quote often? Save any quote as a Build template. Next time, load it into a new quote — all line items copy over instantly. Organized by machine type group.",
+    side: "bottom",
+    navigateTo: () => "/settings",
   },
   {
-    icon: <Settings className="w-10 h-10 text-gray-600" />,
-    title: "Settings & Admin",
-    body: "Use the Settings page to manage the FX rate, vendor discounts, freight options, and labour rates. The Parts Database page lets you search and manage your parts catalog. Sales Reps and Install Times pages round out the reference data.",
-    tip: "All pricing tables here feed into the quote builder — keep them updated and every quote stays accurate.",
+    page: "/settings",
+    element: "#tour-settings-fx",
+    title: "Settings",
+    description: "Keep the FX rate updated here — it feeds every open quote. You also manage vendor discount levels, freight options, labour rates, and markup defaults from this page. Changes take effect immediately across all quotes.",
+    side: "bottom",
   },
 ]
 
+function getTourState(): TourState {
+  try {
+    const raw = localStorage.getItem(TOUR_STATE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return { active: false, step: 0 }
+}
+
+function saveTourState(state: TourState) {
+  localStorage.setItem(TOUR_STATE_KEY, JSON.stringify(state))
+}
+
+function clearTourState() {
+  localStorage.removeItem(TOUR_STATE_KEY)
+  localStorage.setItem(TOUR_SEEN_KEY, "1")
+}
+
+function pageMatches(pageDef: string | RegExp, pathname: string): boolean {
+  if (typeof pageDef === "string") return pageDef === pathname
+  return pageDef.test(pathname)
+}
+
 export function TourGuide() {
-  const [open, setOpen] = useState(false)
-  const [step, setStep] = useState(0)
+  const pathname = usePathname()
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [driverLoaded, setDriverLoaded] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    const seen = localStorage.getItem(TOUR_KEY)
-    if (!seen) {
-      setOpen(true)
-    }
   }, [])
 
-  function close() {
-    localStorage.setItem(TOUR_KEY, "1")
-    setOpen(false)
-    setStep(0)
+  useEffect(() => {
+    if (!mounted) return
+    import("driver.js").then(() => setDriverLoaded(true))
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted || !driverLoaded) return
+    const state = getTourState()
+    if (!state.active) return
+
+    const stepsForPage = STEPS.filter((s, idx) => idx >= state.step && pageMatches(s.page, pathname))
+    if (stepsForPage.length === 0) return
+
+    startDriverFromStep(state.step, state, pathname, router)
+  }, [mounted, driverLoaded, pathname])
+
+  async function startTour() {
+    let state = getTourState()
+    if (!state.active || state.step === 0) {
+      // Create a tour quote if we don't have one
+      if (!state.quoteId) {
+        try {
+          const res = await fetch("/api/quotes/create", { method: "POST" })
+          const data = await res.json()
+          if (data.id) state = { active: true, step: 0, quoteId: data.id }
+        } catch {}
+      }
+      state = { ...state, active: true, step: 0 }
+    }
+    saveTourState(state)
+
+    if (!pageMatches(STEPS[0].page, pathname)) {
+      router.push("/")
+      return
+    }
+    startDriverFromStep(0, state, pathname, router)
   }
 
-  function openTour() {
-    setStep(0)
-    setOpen(true)
+  function startDriverFromStep(fromStep: number, state: TourState, currentPath: string, nav: ReturnType<typeof useRouter>) {
+    import("driver.js").then(async ({ driver }) => {
+      await import("driver.js/dist/driver.css")
+
+      const stepsOnPage = STEPS
+        .map((s, idx) => ({ ...s, globalIdx: idx }))
+        .filter(s => s.globalIdx >= fromStep && pageMatches(s.page, currentPath))
+
+      if (stepsOnPage.length === 0) return
+
+      const driverSteps = stepsOnPage.map((s) => ({
+        element: s.element,
+        popover: {
+          title: s.title,
+          description: s.description,
+          side: s.side ?? "bottom",
+          align: s.align ?? "start",
+        },
+      }))
+
+      const lastStep = stepsOnPage[stepsOnPage.length - 1]
+
+      const d = driver({
+        showProgress: true,
+        progressText: `Step {{current}} of ${STEPS.length}`,
+        allowClose: true,
+        smoothScroll: true,
+        steps: driverSteps,
+        onDestroyStarted: () => {
+          clearTourState()
+          d.destroy()
+        },
+        onNextClick: (el, step, opts) => {
+          const currentLocalIdx = d.getActiveIndex() ?? 0
+          const isLastOnPage = currentLocalIdx === stepsOnPage.length - 1
+          const currentGlobalStep = stepsOnPage[currentLocalIdx]
+
+          if (isLastOnPage && lastStep.navigateTo) {
+            const nextGlobalIdx = lastStep.globalIdx + 1
+            const newState: TourState = { active: true, step: nextGlobalIdx, quoteId: state.quoteId }
+            saveTourState(newState)
+            d.destroy()
+            const target = lastStep.navigateTo(state)
+            nav.push(target)
+          } else {
+            d.moveNext()
+          }
+        },
+        onPrevClick: () => {
+          d.movePrevious()
+        },
+      })
+
+      d.drive()
+    })
   }
 
   if (!mounted) return null
 
-  const current = steps[step]
-  const isFirst = step === 0
-  const isLast = step === steps.length - 1
+  const seen = localStorage.getItem(TOUR_SEEN_KEY)
+  const state = getTourState()
 
   return (
     <>
+      {/* Auto-start for first-time users */}
+      {!seen && !state.active && mounted && (
+        <AutoStart onStart={startTour} />
+      )}
+
       {/* Persistent help button */}
       <button
-        onClick={openTour}
+        onClick={startTour}
         className="fixed top-4 right-4 z-40 w-9 h-9 bg-white border border-gray-200 rounded-full shadow-md flex items-center justify-center hover:bg-blue-50 hover:border-blue-300 transition-colors"
-        title="Open walkthrough guide"
+        title="Start walkthrough tour"
       >
         <HelpCircle className="w-5 h-5 text-gray-400 hover:text-blue-600" />
       </button>
-
-      {/* Overlay */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} />
-
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-auto overflow-hidden">
-            {/* Progress bar */}
-            <div className="h-1 bg-gray-100">
-              <div
-                className="h-1 bg-blue-600 transition-all duration-300"
-                style={{ width: `${((step + 1) / steps.length) * 100}%` }}
-              />
-            </div>
-
-            {/* Close */}
-            <button
-              onClick={close}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Step counter */}
-            <div className="px-8 pt-6 pb-0">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                Step {step + 1} of {steps.length}
-              </span>
-            </div>
-
-            {/* Content */}
-            <div className="px-8 py-6">
-              <div className="flex items-start gap-5">
-                <div className="shrink-0 w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center">
-                  {current.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900 mb-2">{current.title}</h2>
-                  <p className="text-sm text-gray-600 leading-relaxed">{current.body}</p>
-                  {current.tip && (
-                    <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-blue-700"><span className="font-semibold">Tip:</span> {current.tip}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Step dots */}
-            <div className="flex justify-center gap-1.5 pb-2">
-              {steps.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setStep(i)}
-                  className={`rounded-full transition-all ${i === step ? "w-5 h-2 bg-blue-600" : "w-2 h-2 bg-gray-200 hover:bg-gray-300"}`}
-                />
-              ))}
-            </div>
-
-            {/* Footer */}
-            <div className="px-8 pb-6 pt-2 flex items-center justify-between border-t border-gray-100 mt-2">
-              <button
-                onClick={close}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                Skip tour
-              </button>
-              <div className="flex gap-2">
-                {!isFirst && (
-                  <Button variant="outline" size="sm" onClick={() => setStep(s => s - 1)}>
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Back
-                  </Button>
-                )}
-                {isLast ? (
-                  <Button size="sm" onClick={close} className="bg-blue-600 hover:bg-blue-700">
-                    Get Started
-                  </Button>
-                ) : (
-                  <Button size="sm" onClick={() => setStep(s => s + 1)} className="bg-blue-600 hover:bg-blue-700">
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
+}
+
+function AutoStart({ onStart }: { onStart: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onStart, 800)
+    return () => clearTimeout(timer)
+  }, [onStart])
+  return null
 }
