@@ -32,6 +32,7 @@ export function AppSidebar() {
   }
 
   return (
+    <>
     <aside className="w-56 bg-white border-r border-gray-200 flex flex-col h-full shrink-0">
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
