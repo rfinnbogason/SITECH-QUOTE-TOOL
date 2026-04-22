@@ -1,5 +1,5 @@
 "use server"
-import { db, quotes, quoteLineItems, quoteFreightLabour, settings } from "@/lib/db"
+import { db, quotes, quoteLineItems, quoteFreightLabour, quoteFolders, settings } from "@/lib/db"
 import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { todayISO, futureISO } from "@/lib/formatters"
@@ -85,6 +85,37 @@ export async function deleteFreightLabour(id: number, quoteId: number) {
   await db.delete(quoteFreightLabour).where(eq(quoteFreightLabour.id, id))
   await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, quoteId))
   revalidatePath(`/quotes/${quoteId}`)
+}
+
+export async function deleteQuote(id: number) {
+  await db.delete(quoteFreightLabour).where(eq(quoteFreightLabour.quoteId, id))
+  await db.delete(quoteLineItems).where(eq(quoteLineItems.quoteId, id))
+  await db.delete(quotes).where(eq(quotes.id, id))
+  revalidatePath("/quotes")
+  revalidatePath("/")
+}
+
+export async function moveQuoteToFolder(id: number, folder: string) {
+  await db.update(quotes).set({ folder, updatedAt: new Date() }).where(eq(quotes.id, id))
+  revalidatePath("/quotes")
+}
+
+export async function getQuoteFolders() {
+  return db.select().from(quoteFolders).orderBy(quoteFolders.name)
+}
+
+export async function createQuoteFolder(name: string) {
+  await db.insert(quoteFolders).values({ name: name.trim() }).onConflictDoNothing()
+  revalidatePath("/quotes")
+}
+
+export async function deleteQuoteFolder(id: number) {
+  const [folder] = await db.select().from(quoteFolders).where(eq(quoteFolders.id, id))
+  if (folder) {
+    await db.update(quotes).set({ folder: "" }).where(eq(quotes.folder, folder.name))
+  }
+  await db.delete(quoteFolders).where(eq(quoteFolders.id, id))
+  revalidatePath("/quotes")
 }
 
 export async function bulkInsertLineItems(

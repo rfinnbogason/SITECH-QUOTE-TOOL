@@ -66,6 +66,12 @@ export const partsDb = pgTable("parts_db", {
   notes: text("notes").notNull().default(""),
 })
 
+export const quoteFolders = pgTable("quote_folders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
   number: text("number").notNull().unique(),
@@ -85,6 +91,7 @@ export const quotes = pgTable("quotes", {
   discountPct: real("discount_pct").notNull().default(0),
   taxPct: real("tax_pct").notNull().default(0),
   status: text("status").notNull().default("Draft"),
+  folder: text("folder").notNull().default(""),
   notes: text("notes").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -134,6 +141,7 @@ export type LabourOption = typeof labourOptions.$inferSelect
 export type MarkupDefault = typeof markupDefaults.$inferSelect
 export type InstallTime = typeof installTimes.$inferSelect
 export type PartDb = typeof partsDb.$inferSelect
+export type QuoteFolder = typeof quoteFolders.$inferSelect
 export type Quote = typeof quotes.$inferSelect
 export type QuoteLineItem = typeof quoteLineItems.$inferSelect
 export type QuoteFreightLabour = typeof quoteFreightLabour.$inferSelect
