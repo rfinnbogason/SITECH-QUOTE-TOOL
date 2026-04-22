@@ -1,3 +1,7 @@
+export function cleanSection(section: string): string {
+  return section.replace(/^[\p{Emoji}\u{FE0F}\u{20E3}\s]+/u, "").trim()
+}
+
 export const SECTIONS = [
   "WHOLE MACHINE",
   "CAB KIT COMPONENTS",

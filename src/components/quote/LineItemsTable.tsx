@@ -2,7 +2,7 @@
 import { useState } from "react"
 import type { QuoteLineItem } from "@/lib/db/schema"
 import type { LineItemCalc } from "@/lib/calculations"
-import { SECTIONS, CURRENCIES } from "@/lib/constants"
+import { SECTIONS, CURRENCIES, cleanSection } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -60,7 +60,7 @@ export function LineItemsTable({ items, fxRate, onChange, onDelete }: Props) {
           {items.map((item, idx) => (
             <tr key={item.id} className={cn("hover:bg-blue-50/30 transition-colors", idx % 2 === 0 ? "" : "bg-gray-50/50")}>
               <td className="px-2 py-1">
-                <Select value={item.section} onValueChange={v => patch(item.id, item, "section", v)}>
+                <Select value={cleanSection(item.section)} onValueChange={v => patch(item.id, item, "section", v)}>
                   <SelectTrigger className="h-6 text-xs border-0 bg-transparent hover:bg-gray-100 focus:ring-0 px-1">
                     <SelectValue />
                   </SelectTrigger>

@@ -100,7 +100,7 @@ export const quotes = pgTable("quotes", {
 export const quoteLineItems = pgTable("quote_line_items", {
   id: serial("id").primaryKey(),
   quoteId: integer("quote_id").notNull(),
-  section: text("section").notNull().default("🏗️ WHOLE MACHINE"),
+  section: text("section").notNull().default("WHOLE MACHINE"),
   position: integer("position").notNull().default(0),
   qty: real("qty").notNull().default(1),
   partNumber: text("part_number").notNull().default(""),

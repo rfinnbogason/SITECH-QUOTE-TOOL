@@ -2,7 +2,7 @@
 import type { Quote, QuoteLineItem, QuoteFreightLabour } from "@/lib/db/schema"
 import { calcLineItem, calcQuoteTotals } from "@/lib/calculations"
 import { formatCurrency, formatDate } from "@/lib/formatters"
-import { SECTIONS, COMPANY_INFO, TERMS_AND_CONDITIONS } from "@/lib/constants"
+import { SECTIONS, COMPANY_INFO, TERMS_AND_CONDITIONS, cleanSection } from "@/lib/constants"
 import Image from "next/image"
 
 interface Props {
@@ -25,10 +25,7 @@ export function PrintQuote({ quote, lineItems, freightLabour, defaultFxRate }: P
 
   const knownIds = new Set<number>()
   const groupedItems: { section: string; items: typeof calcedItems }[] = SECTIONS.map(section => {
-    const items = calcedItems.filter(i => {
-      const clean = i.section.replace(/^[\p{Emoji}\s]+/u, "").trim()
-      return i.section === section || clean === section
-    })
+    const items = calcedItems.filter(i => cleanSection(i.section) === section)
     items.forEach(i => knownIds.add(i.id))
     return { section, items }
   }).filter(g => g.items.length > 0)
@@ -125,7 +122,7 @@ export function PrintQuote({ quote, lineItems, freightLabour, defaultFxRate }: P
             {groupedItems.map(({ section, items }) => (
               <>
                 <tr key={`hdr-${section}`}>
-                  <td colSpan={5} className="px-3 py-1 bg-gray-100 text-xs font-semibold text-gray-700 border-y border-gray-200">{section}</td>
+                  <td colSpan={5} className="px-3 py-1 bg-gray-100 text-xs font-semibold text-gray-700 border-y border-gray-200">{cleanSection(section)}</td>
                 </tr>
                 {items.map((item) => {
                   if (!item.showPrice) return null

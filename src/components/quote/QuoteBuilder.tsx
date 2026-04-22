@@ -75,7 +75,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
     const maxPos = lineItems.reduce((m, i) => i.position > m ? i.position : m, 0)
     const newItem = await upsertLineItem({
       quoteId: quoteData.id,
-      section: "🏗️ WHOLE MACHINE",
+      section: "WHOLE MACHINE",
       position: maxPos + 1,
       qty: 1,
       partNumber: "",
@@ -119,7 +119,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
       {/* Top Bar */}
       <div id="tour-quote-topbar" className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-lg font-bold text-gray-900">{quoteData.number}</span>
+          <QuoteNumberInput number={quoteData.number} onSave={v => saveField("number", v)} />
           <Badge variant={quoteData.status === "Final" ? "default" : "secondary"}>{quoteData.status}</Badge>
           {isPending && <span className="text-xs text-gray-400 animate-pulse">Saving…</span>}
         </div>
@@ -376,6 +376,41 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
         machineMake={quoteData.machineMake ?? ""}
       />
     </div>
+  )
+}
+
+function QuoteNumberInput({ number, onSave }: { number: string; onSave: (v: string) => void }) {
+  const [value, setValue] = useState(number)
+  const [editing, setEditing] = useState(false)
+
+  function handleBlur() {
+    setEditing(false)
+    const trimmed = value.trim()
+    if (trimmed && trimmed !== number) onSave(trimmed)
+    else setValue(number)
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={e => { if (e.key === "Enter") handleBlur(); if (e.key === "Escape") { setValue(number); setEditing(false) } }}
+        className="font-mono text-lg font-bold text-gray-900 bg-transparent border-b-2 border-blue-500 outline-none w-40"
+      />
+    )
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      title="Click to edit quote number"
+      className="font-mono text-lg font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors cursor-text"
+    >
+      {number}
+    </button>
   )
 }
 
