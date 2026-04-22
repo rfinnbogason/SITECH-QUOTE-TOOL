@@ -1,6 +1,5 @@
 "use client"
 import { useState, useCallback, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Quote, QuoteLineItem, QuoteFreightLabour, SalesRep, FreightOption, LabourOption } from "@/lib/db/schema"
 import { updateQuote, upsertLineItem, deleteLineItem, upsertFreightLabour, deleteFreightLabour, bulkInsertLineItems } from "@/app/actions/quotes"
@@ -33,7 +32,6 @@ interface Props {
 }
 
 export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: initFL, reps, freightOptions, labourOptions, defaultFxRate }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [lineItems, setLineItems] = useState(initLineItems)
   const [freightLabour, setFreightLabour] = useState(initFL)
@@ -75,7 +73,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
 
   async function handleAddRow() {
     const maxPos = lineItems.reduce((m, i) => i.position > m ? i.position : m, 0)
-    await upsertLineItem({
+    const newItem = await upsertLineItem({
       quoteId: quoteData.id,
       section: "🏗️ WHOLE MACHINE",
       position: maxPos + 1,
@@ -88,7 +86,7 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
       vendorDiscountPct: 40,
       showPrice: true,
     })
-    router.refresh()
+    if (newItem) setLineItems(prev => [...prev, newItem])
   }
 
   function handleFLChange(updated: QuoteFreightLabour) {
@@ -106,13 +104,13 @@ export function QuoteBuilder({ quote, lineItems: initLineItems, freightLabour: i
   }
 
   async function handleAddFL(type: "FREIGHT" | "LABOUR") {
-    await upsertFreightLabour({ quoteId: quoteData.id, type, code: "", description: "", qtyHours: 1, rateCad: 0 })
-    router.refresh()
+    const newFL = await upsertFreightLabour({ quoteId: quoteData.id, type, code: "", description: "", qtyHours: 1, rateCad: 0 })
+    if (newFL) setFreightLabour(prev => [...prev, newFL])
   }
 
   async function handlePasteImport(items: Omit<QuoteLineItem, "id" | "quoteId">[]) {
-    await bulkInsertLineItems(quoteData.id, items)
-    router.refresh()
+    const inserted = await bulkInsertLineItems(quoteData.id, items)
+    if (inserted?.length) setLineItems(prev => [...prev, ...inserted])
     toast.success(`${items.length} item${items.length !== 1 ? "s" : ""} imported`)
   }
 

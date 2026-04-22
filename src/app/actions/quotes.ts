@@ -56,13 +56,17 @@ export async function updateQuote(id: number, data: Partial<typeof quotes.$infer
 }
 
 export async function upsertLineItem(item: typeof quoteLineItems.$inferInsert) {
+  let result: typeof quoteLineItems.$inferSelect
   if (item.id) {
-    await db.update(quoteLineItems).set(item).where(eq(quoteLineItems.id, item.id))
+    const [r] = await db.update(quoteLineItems).set(item).where(eq(quoteLineItems.id, item.id)).returning()
+    result = r
   } else {
-    await db.insert(quoteLineItems).values(item)
+    const [r] = await db.insert(quoteLineItems).values(item).returning()
+    result = r
   }
   await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, item.quoteId))
   revalidatePath(`/quotes/${item.quoteId}`)
+  return result
 }
 
 export async function deleteLineItem(id: number, quoteId: number) {
@@ -72,13 +76,17 @@ export async function deleteLineItem(id: number, quoteId: number) {
 }
 
 export async function upsertFreightLabour(item: typeof quoteFreightLabour.$inferInsert) {
+  let result: typeof quoteFreightLabour.$inferSelect
   if (item.id) {
-    await db.update(quoteFreightLabour).set(item).where(eq(quoteFreightLabour.id, item.id))
+    const [r] = await db.update(quoteFreightLabour).set(item).where(eq(quoteFreightLabour.id, item.id)).returning()
+    result = r
   } else {
-    await db.insert(quoteFreightLabour).values(item)
+    const [r] = await db.insert(quoteFreightLabour).values(item).returning()
+    result = r
   }
   await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, item.quoteId))
   revalidatePath(`/quotes/${item.quoteId}`)
+  return result
 }
 
 export async function deleteFreightLabour(id: number, quoteId: number) {
@@ -125,9 +133,12 @@ export async function bulkInsertLineItems(
   const existing = await db.select({ position: quoteLineItems.position })
     .from(quoteLineItems).where(eq(quoteLineItems.quoteId, quoteId))
   const maxPos = existing.reduce((m, r) => r.position > m ? r.position : m, 0)
+  const inserted: (typeof quoteLineItems.$inferSelect)[] = []
   for (let i = 0; i < items.length; i++) {
-    await db.insert(quoteLineItems).values({ ...items[i], quoteId, position: maxPos + i + 1 })
+    const [r] = await db.insert(quoteLineItems).values({ ...items[i], quoteId, position: maxPos + i + 1 }).returning()
+    inserted.push(r)
   }
   await db.update(quotes).set({ updatedAt: new Date() }).where(eq(quotes.id, quoteId))
   revalidatePath(`/quotes/${quoteId}`)
+  return inserted
 }
